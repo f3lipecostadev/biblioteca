@@ -6,10 +6,17 @@ export default class BooksController {
     const books = await auth.user?.related('books').query()
     return books
   }
-  async store({ request, auth }: HttpContext) {
+  async store({ request, auth, response }: HttpContext) {
     const user = auth.user!
     const { titulo, autor, genero, anoPublicacao, statusLeitura, observacoes } =
       await request.validateUsing(createBookValidator)
+
+    const statusPermitidos = ['lido', 'lendo', 'quero ler']
+    if (!statusLeitura || !statusPermitidos.includes(statusLeitura)) {
+      return response.badRequest({
+        error: 'Status de leitura inválido. Use apenas: lido, lendo ou quero ler.',
+      })
+    }
     const book = await user.related('books').create({
       titulo,
       autor,
@@ -35,6 +42,16 @@ export default class BooksController {
       const book = await Book.findByOrFail('id', params.id)
       const { titulo, autor, genero, anoPublicacao, statusLeitura, observacoes } =
         await request.validateUsing(updateBookValidator)
+
+      if (statusLeitura) {
+        const statusPermitidos = ['lido', 'lendo', 'quero ler']
+        if (!statusPermitidos.includes(statusLeitura)) {
+          return response.badRequest({
+            error: 'Status de leitura inválido. Use apenas: lido, lendo ou quero ler.',
+          })
+        }
+      }
+
       book.merge({
         titulo,
         autor,
