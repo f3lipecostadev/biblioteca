@@ -12,7 +12,7 @@ export default class BooksController {
       await request.validateUsing(createBookValidator)
 
     const statusPermitidos = ['lido', 'lendo', 'quero ler']
-    if (!statusLeitura || !statusPermitidos.includes(statusLeitura)) {
+    if (!statusLeitura || !statusPermitidos.includes(statusLeitura.toLowerCase())) {
       return response.badRequest({
         error: 'Status de leitura inválido. Use apenas: lido, lendo ou quero ler.',
       })
@@ -22,7 +22,7 @@ export default class BooksController {
       autor,
       genero,
       anoPublicacao,
-      statusLeitura,
+      statusLeitura: statusLeitura.toLowerCase(),
       observacoes,
     })
     return book
@@ -45,7 +45,7 @@ export default class BooksController {
 
       if (statusLeitura) {
         const statusPermitidos = ['lido', 'lendo', 'quero ler']
-        if (!statusPermitidos.includes(statusLeitura)) {
+        if (!statusPermitidos.includes(statusLeitura.toLowerCase())) {
           return response.badRequest({
             error: 'Status de leitura inválido. Use apenas: lido, lendo ou quero ler.',
           })
@@ -57,7 +57,7 @@ export default class BooksController {
         autor,
         genero,
         anoPublicacao,
-        statusLeitura,
+        statusLeitura: statusLeitura?.toLowerCase(),
         observacoes,
       })
       if (auth.user?.id === book.userId) {
