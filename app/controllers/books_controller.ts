@@ -43,7 +43,6 @@ export default class BooksController {
         statusLeitura,
         observacoes,
       })
-
       if (auth.user?.id === book.userId) {
         await book.save()
       } else {
