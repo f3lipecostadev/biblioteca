@@ -1,19 +1,15 @@
 import { createBookValidator, updateBookValidator } from '#validators/book'
 import type { HttpContext } from '@adonisjs/core/http'
 import Book from '#models/book'
-
 export default class BooksController {
   async index({ auth }: HttpContext) {
     const books = await auth.user?.related('books').query()
     return books
   }
-
   async store({ request, auth }: HttpContext) {
     const user = auth.user!
-
     const { titulo, autor, genero, anoPublicacao, statusLeitura, observacoes } =
       await request.validateUsing(createBookValidator)
-
     const book = await user.related('books').create({
       titulo,
       autor,
@@ -22,7 +18,6 @@ export default class BooksController {
       statusLeitura,
       observacoes,
     })
-
     return book
   }
 
@@ -38,17 +33,8 @@ export default class BooksController {
   async update({ params, request, response, auth }: HttpContext) {
     try {
       const book = await Book.findByOrFail('id', params.id)
-      const user = auth.user!
-
       const { titulo, autor, genero, anoPublicacao, statusLeitura, observacoes } =
         await request.validateUsing(updateBookValidator)
-
-      if (user.id !== book.userId) {
-        return response.json({
-          error: 'Pode ser atualizado apenas pelo criador do livro',
-        })
-      }
-
       book.merge({
         titulo,
         autor,
@@ -58,8 +44,13 @@ export default class BooksController {
         observacoes,
       })
 
-      await book.save()
-
+      if (auth.user?.id === book.userId) {
+        await book.save()
+      } else {
+        return response.json({
+          error: 'Pode ser atualizado apenas pelo criador do livro',
+        })
+      }
       return book
     } catch {
       return response.json({ error: 'book not found' })
@@ -69,16 +60,14 @@ export default class BooksController {
   async destroy({ params, response, auth }: HttpContext) {
     try {
       const book = await Book.findByOrFail('id', params.id)
-      const user = auth.user!
-
-      if (user.id !== book.userId) {
+      if (auth.user?.id === book.userId) {
+        await book.delete()
+        return response.status(203)
+      } else {
         return response.json({
           error: 'Pode ser deletado apenas pelo criador do livro',
         })
       }
-
-      await book.delete()
-      return response.status(203)
     } catch {
       return response.json({ error: 'book not found' })
     }
